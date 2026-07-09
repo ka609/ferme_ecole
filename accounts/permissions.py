@@ -1,110 +1,38 @@
 from rest_framework.permissions import BasePermission
 
 
-# =========================
-# 🔑 ADMIN UNIQUEMENT
-# =========================
-class IsAdminUser(BasePermission):
-    """
-    Accès réservé au superuser Django (administrateur système)
-    """
-
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated and request.user.is_superuser
-
-
-# =========================
-# 💼 GESTIONNAIRE STOCK
-# =========================
-class IsStockManager(BasePermission):
-    """
-    Gestionnaire de stock (via role)
-    """
-
+class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "STOCK"
+            request.user.is_authenticated
+            and request.user.role == "ADMIN"
         )
 
 
-# =========================
-# 📊 GESTIONNAIRE COMMERCIAL
-# =========================
-class IsCommercialManager(BasePermission):
-    """
-    Supervision des ventes et commandes
-    """
-
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "COMMERCIAL"
-        )
-
-
-# =========================
-# 🚚 LIVREUR
-# =========================
-class IsLivreur(BasePermission):
-    """
-    Accès livreur (admin Django)
-    """
-
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "LIVREUR"
-        )
-
-
-# =========================
-# 👤 CLIENT
-# =========================
-class IsClient(BasePermission):
-    """
-    Accès client Flutter
-    """
-
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "CLIENT"
-        )
-
-
-# =========================
-# 🌱 PRODUCTEUR
-# =========================
 class IsProducteur(BasePermission):
-    """
-    Accès producteur Flutter
-    """
-
     def has_permission(self, request, view):
         return (
-            request.user
-            and request.user.is_authenticated
+            request.user.is_authenticated
             and request.user.role == "PRODUCTEUR"
         )
 
 
-# =========================
-# 🔓 MIX ROLE (ADMIN + COMMERCIAL + STOCK)
-# =========================
-class IsStaffInternal(BasePermission):
-    """
-    Personnel interne de la FERME-ÉCOLE
-    (admin Django hors superuser logique métier)
-    """
-
+class IsClient(BasePermission):
     def has_permission(self, request, view):
         return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.role in ["STOCK", "COMMERCIAL", "LIVREUR"]
+            request.user.is_authenticated
+            and request.user.role == "CLIENT"
         )
+
+
+class IsLivreur(BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and request.user.role == "LIVREUR"
+        )
+
+
+class IsAuthenticatedUser(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
