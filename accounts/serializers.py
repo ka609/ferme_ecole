@@ -149,31 +149,22 @@ class UtilisateurSerializer(serializers.ModelSerializer):
 
         return attrs
 
-
-
-# =====================================================
 # INSCRIPTION
-# =====================================================
-
 class RegisterSerializer(serializers.ModelSerializer):
-
 
     password = serializers.CharField(
         write_only=True,
-        min_length=8
+        min_length=8,
     )
-
 
     password_confirmation = serializers.CharField(
-        write_only=True
+        write_only=True,
     )
-
 
 
     class Meta:
 
         model = Utilisateur
-
 
         fields = (
 
@@ -191,6 +182,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
             "telephone",
 
+            "role",
+
             "type_client",
 
             "autre_precision",
@@ -200,14 +193,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
 
-
     def validate(self, attrs):
 
-
-        if (
-            attrs["password"]
-            != attrs["password_confirmation"]
-        ):
+        if attrs["password"] != attrs["password_confirmation"]:
 
             raise serializers.ValidationError(
                 {
@@ -217,17 +205,66 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
 
 
-        return attrs
+        role = attrs.get("role")
 
+
+        if role not in (
+            Role.CLIENT,
+            Role.LIVREUR,
+        ):
+
+            raise serializers.ValidationError(
+                {
+                    "role":
+                    "Seuls les clients et les livreurs peuvent s'inscrire."
+                }
+            )
+
+
+        if role == Role.CLIENT:
+
+            type_client = attrs.get("type_client")
+
+            if not type_client:
+
+                raise serializers.ValidationError(
+                    {
+                        "type_client":
+                        "Veuillez choisir un type de client."
+                    }
+                )
+
+
+            if (
+                type_client == TypeClient.AUTRE
+                and not attrs.get("autre_precision")
+            ):
+
+                raise serializers.ValidationError(
+                    {
+                        "autre_precision":
+                        "Veuillez préciser votre activité."
+                    }
+                )
+
+        else:
+
+            attrs["type_client"] = None
+            attrs["autre_precision"] = ""
+
+
+        return attrs
 
 
     def create(self, validated_data):
 
-
         validated_data.pop(
-            "password_confirmation"
+            "password_confirmation",
         )
 
+        role = validated_data.pop(
+            "role",
+        )
 
         user = Utilisateur.objects.create_user(
 
@@ -237,15 +274,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
             password=validated_data.pop("password"),
 
-            role=Role.CLIENT,
+            role=role,
 
-            **validated_data
+            **validated_data,
 
         )
 
-
         return user
-
 
 
 # =====================================================

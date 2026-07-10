@@ -9,6 +9,7 @@ Gestion :
 - Paramètres plateforme
 """
 
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import (
@@ -52,25 +53,32 @@ class TypeClient(models.TextChoices):
 class Utilisateur(AbstractUser):
 
     email = models.EmailField(
-        _("adresse email"),
+        _("Adresse email"),
         unique=True
     )
 
+
     nom = models.CharField(
+        _("Nom"),
         max_length=100
     )
+
 
     prenom = models.CharField(
+        _("Prénom"),
         max_length=100
     )
 
+
     telephone = models.CharField(
+        _("Téléphone"),
         max_length=20,
         unique=True
     )
 
 
     role = models.CharField(
+        _("Rôle"),
         max_length=20,
         choices=Role.choices,
         default=Role.CLIENT,
@@ -79,22 +87,23 @@ class Utilisateur(AbstractUser):
 
 
     type_client = models.CharField(
+        _("Type client"),
         max_length=20,
         choices=TypeClient.choices,
         null=True,
-        blank=True,
-        help_text="Utilisé uniquement pour les comptes CLIENT."
+        blank=True
     )
 
 
     autre_precision = models.CharField(
+        _("Autre précision"),
         max_length=100,
-        blank=True,
-        help_text="Précision si le type client est AUTRE."
+        blank=True
     )
 
 
     photo = models.ImageField(
+        _("Photo"),
         upload_to="utilisateurs/photos/",
         blank=True,
         null=True
@@ -102,23 +111,25 @@ class Utilisateur(AbstractUser):
 
 
     adresse = models.TextField(
-        blank=True,
-        help_text="Lieu de résidence ou adresse de livraison."
+        _("Adresse"),
+        blank=True
     )
 
 
     actif = models.BooleanField(
-        default=True,
-        help_text="Permet de suspendre un compte."
+        _("Compte actif"),
+        default=True
     )
 
 
     premiere_connexion = models.BooleanField(
+        _("Première connexion"),
         default=False
     )
 
 
     date_creation = models.DateTimeField(
+        _("Date création"),
         auto_now_add=True
     )
 
@@ -126,39 +137,27 @@ class Utilisateur(AbstractUser):
     class Meta:
 
         verbose_name = "Utilisateur"
+
         verbose_name_plural = "Utilisateurs"
 
         ordering = [
             "-date_creation"
         ]
 
-
         indexes = [
 
             models.Index(
-                fields=["role"],
-                name="idx_utilisateur_role"
+                fields=[
+                    "role"
+                ]
             ),
 
             models.Index(
-                fields=["role", "actif"],
-                name="idx_utilisateur_role_actif"
+                fields=[
+                    "role",
+                    "actif"
+                ]
             ),
-
-        ]
-
-
-        constraints = [
-
-            models.CheckConstraint(
-
-                condition=
-                models.Q(role="CLIENT")
-                |
-                models.Q(type_client__isnull=True),
-
-                name="type_client_uniquement_client"
-            )
 
         ]
 
@@ -166,10 +165,14 @@ class Utilisateur(AbstractUser):
 
     def __str__(self):
 
-        return (
-            f"{self.username} - "
-            f"{self.prenom} {self.nom}"
-        )
+        return self.nom_complet
+
+
+
+    @property
+    def nom_complet(self):
+
+        return f"{self.prenom} {self.nom}"
 
 
 
@@ -179,7 +182,6 @@ class Utilisateur(AbstractUser):
 
 
         if self.role == Role.CLIENT:
-
 
             if not self.type_client:
 
@@ -209,16 +211,9 @@ class Utilisateur(AbstractUser):
             raise ValidationError(
                 {
                     "type_client":
-                    "Ce champ est réservé aux clients."
+                    "Champ réservé aux clients."
                 }
             )
-
-
-
-    @property
-    def nom_complet(self):
-
-        return f"{self.prenom} {self.nom}"
 
 
 
@@ -228,41 +223,37 @@ class Utilisateur(AbstractUser):
 
 class Producteur(models.Model):
 
-    """
-    Profil producteur.
-
-    Créé uniquement par ADMIN.
-    """
 
     utilisateur = models.OneToOneField(
         Utilisateur,
+        verbose_name="Utilisateur",
         on_delete=models.CASCADE,
-        related_name="producteur",
-        limit_choices_to={
-            "role": Role.PRODUCTEUR
-        }
+        related_name="producteur"
     )
 
 
     nom_exploitation = models.CharField(
+        "Nom exploitation",
         max_length=150
     )
 
 
     description = models.TextField(
+        "Description",
         blank=True
     )
 
 
     date_creation = models.DateField(
+        "Date création",
         auto_now_add=True
     )
-
 
 
     class Meta:
 
         verbose_name = "Producteur"
+
         verbose_name_plural = "Producteurs"
 
         ordering = [
@@ -274,19 +265,6 @@ class Producteur(models.Model):
     def __str__(self):
 
         return self.nom_exploitation
-
-
-
-    def clean(self):
-
-        if (
-            self.utilisateur_id
-            and self.utilisateur.role != Role.PRODUCTEUR
-        ):
-
-            raise ValidationError(
-                "Le profil doit être lié à un utilisateur PRODUCTEUR."
-            )
 
 
 
@@ -311,31 +289,40 @@ class Notification(models.Model):
 
     utilisateur = models.ForeignKey(
         Utilisateur,
+        verbose_name="Utilisateur",
         on_delete=models.CASCADE,
         related_name="notifications"
     )
 
 
     titre = models.CharField(
+        "Titre",
         max_length=150
     )
 
 
-    message = models.TextField()
+    message = models.TextField(
+        "Message"
+    )
 
 
     lu = models.BooleanField(
+        "Lu",
         default=False
     )
 
 
     date = models.DateTimeField(
+        "Date",
         auto_now_add=True
     )
 
 
-
     class Meta:
+
+        verbose_name = "Notification"
+
+        verbose_name_plural = "Notifications"
 
         ordering = [
             "-date"
@@ -358,41 +345,55 @@ class JournalActivite(models.Model):
 
     utilisateur = models.ForeignKey(
         Utilisateur,
-        on_delete=models.SET_NULL,
+        verbose_name="Utilisateur",
         null=True,
         blank=True,
+        on_delete=models.SET_NULL,
         related_name="journal_activite"
     )
 
 
     action = models.CharField(
+        "Action",
         max_length=100
     )
 
 
     objet = models.CharField(
+        "Objet",
         max_length=150,
         blank=True
     )
 
 
     adresse_ip = models.GenericIPAddressField(
+        "Adresse IP",
         null=True,
         blank=True
     )
 
 
     date = models.DateTimeField(
+        "Date",
         auto_now_add=True
     )
 
 
-
     class Meta:
+
+        verbose_name = "Journal activité"
+
+        verbose_name_plural = "Journaux activités"
 
         ordering = [
             "-date"
         ]
+
+
+
+    def __str__(self):
+
+        return self.action
 
 
 
@@ -404,6 +405,7 @@ class Parametre(models.Model):
 
 
     commission_plateforme = models.DecimalField(
+        "Commission plateforme (%)",
         max_digits=5,
         decimal_places=2,
         default=10,
@@ -415,6 +417,7 @@ class Parametre(models.Model):
 
 
     commission_livreur = models.DecimalField(
+        "Commission livreur",
         max_digits=10,
         decimal_places=2,
         default=0
@@ -422,20 +425,23 @@ class Parametre(models.Model):
 
 
     devise = models.CharField(
+        "Devise",
         max_length=10,
         default="FCFA"
     )
 
 
     maintenance = models.BooleanField(
+        "Mode maintenance",
         default=False
     )
-
 
 
     class Meta:
 
         verbose_name = "Paramètre plateforme"
+
+        verbose_name_plural = "Paramètres plateforme"
 
 
 
@@ -448,6 +454,7 @@ class Parametre(models.Model):
     def save(self, *args, **kwargs):
 
         self.pk = 1
+
         super().save(*args, **kwargs)
 
 

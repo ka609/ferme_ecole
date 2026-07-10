@@ -38,11 +38,6 @@ class Certification(models.Model):
     date_debut = models.DateField(null=True, blank=True)
     date_fin = models.DateField(null=True, blank=True, help_text="Date d'expiration de la certification.")
     statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)
-    valide_par = models.ForeignKey(
-        "accounts.Utilisateur", on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="certifications_validees",
-        limit_choices_to={"role": "ADMIN"},
-    )
     date_validation = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -68,8 +63,6 @@ class Certification(models.Model):
     def clean(self):
         if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
             raise ValidationError({"date_fin": "La date de fin doit être postérieure à la date de début."})
-        if self.statut == self.Statut.VALIDEE and not self.valide_par_id:
-            raise ValidationError({"valide_par": "Un administrateur doit être renseigné pour valider."})
 
     def save(self, *args, **kwargs):
         self.clean()

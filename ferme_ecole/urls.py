@@ -17,7 +17,9 @@ from django.urls import (
     include,
 )
 
-
+admin.site.site_header = "FERME-ÉCOLE Administration"
+admin.site.site_title = "FERME-ÉCOLE"
+admin.site.index_title = "Gestion de la plateforme"
 from django.conf import settings
 
 from django.conf.urls.static import static
@@ -30,14 +32,13 @@ from rest_framework.routers import DefaultRouter
 # =====================================================
 # ACCOUNTS
 # =====================================================
-
+from accounts.views import ProducteurStatistiqueViewSet
 from accounts.views import (
     UtilisateurViewSet,
     ProducteurViewSet,
     NotificationViewSet,
     JournalActiviteViewSet,
     ParametreViewSet,
-
     RegisterView,
     LoginView,
     ProfileView,
@@ -250,6 +251,11 @@ router.register(
     SuiviFormationViewSet,
     basename="suivis-formations"
 )
+router.register(
+    r'producteur/statistiques',
+    ProducteurStatistiqueViewSet,
+    basename='producteur-statistiques',
+)
 
 
 
@@ -263,6 +269,10 @@ urlpatterns = [
     path(
         "admin/",
         admin.site.urls
+    ),
+       path(
+        "grappelli/",
+        include("grappelli.urls")
     ),
 
 

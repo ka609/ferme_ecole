@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.html import format_html
 
 from .models import (
     Utilisateur,
@@ -7,6 +8,11 @@ from .models import (
     Notification,
     JournalActivite,
     Parametre,
+)
+
+from .forms import (
+    UtilisateurCreationForm,
+    UtilisateurChangeForm,
 )
 
 
@@ -20,33 +26,40 @@ class UtilisateurAdmin(UserAdmin):
 
     model = Utilisateur
 
+    form = UtilisateurChangeForm
+    add_form = UtilisateurCreationForm
+
 
     list_display = (
         "username",
-        "nom",
-        "prenom",
+        "nom_complet_admin",
         "email",
         "telephone",
         "role",
-        "actif",
+        "statut_compte",
         "is_staff",
     )
 
 
     list_filter = (
+
         "role",
         "actif",
         "is_staff",
         "is_superuser",
+        "premiere_connexion",
+
     )
 
 
     search_fields = (
+
         "username",
         "email",
         "nom",
         "prenom",
         "telephone",
+
     )
 
 
@@ -55,10 +68,19 @@ class UtilisateurAdmin(UserAdmin):
     )
 
 
+    readonly_fields = (
+
+        "date_creation",
+        "last_login",
+        "date_joined",
+
+    )
+
+
     fieldsets = (
 
         (
-            "Informations de connexion",
+            "Connexion",
             {
                 "fields": (
                     "username",
@@ -84,7 +106,7 @@ class UtilisateurAdmin(UserAdmin):
 
 
         (
-            "Rôle plateforme",
+            "Profil plateforme",
             {
                 "fields": (
                     "role",
@@ -96,11 +118,21 @@ class UtilisateurAdmin(UserAdmin):
 
 
         (
-            "Permissions Django",
+            "État du compte",
+            {
+                "fields": (
+                    "actif",
+                    "premiere_connexion",
+                )
+            }
+        ),
+
+
+        (
+            "Permissions",
             {
                 "fields": (
                     "is_active",
-                    "actif",
                     "is_staff",
                     "is_superuser",
                     "groups",
@@ -111,10 +143,9 @@ class UtilisateurAdmin(UserAdmin):
 
 
         (
-            "Informations système",
+            "Dates",
             {
                 "fields": (
-                    "premiere_connexion",
                     "date_creation",
                     "last_login",
                     "date_joined",
@@ -125,11 +156,64 @@ class UtilisateurAdmin(UserAdmin):
     )
 
 
-    readonly_fields = (
-        "date_creation",
-        "last_login",
-        "date_joined",
+    add_fieldsets = (
+
+        (
+            "Créer utilisateur",
+            {
+
+                "classes": (
+                    "wide",
+                ),
+
+                "fields": (
+
+                    "username",
+                    "password1",
+                    "password2",
+
+                    "nom",
+                    "prenom",
+
+                    "email",
+                    "telephone",
+
+                    "role",
+
+                    "type_client",
+                    "autre_precision",
+
+                ),
+
+            },
+        ),
+
     )
+
+
+    @admin.display(
+        description="Nom complet"
+    )
+    def nom_complet_admin(self, obj):
+
+        return obj.nom_complet
+
+
+
+    @admin.display(
+        description="Statut"
+    )
+    def statut_compte(self, obj):
+
+        if obj.actif:
+
+            return format_html(
+                '<span style="color:green;">Actif</span>'
+            )
+
+        return format_html(
+            '<span style="color:red;">Suspendu</span>'
+        )
 
 
 
@@ -142,29 +226,54 @@ class ProducteurAdmin(admin.ModelAdmin):
 
 
     list_display = (
+
         "nom_exploitation",
         "utilisateur",
+        "certification_bio",
         "date_creation",
-        "est_certifie_bio",
-    )
 
-
-    search_fields = (
-        "nom_exploitation",
-        "utilisateur__username",
-        "utilisateur__email",
     )
 
 
     list_filter = (
+
         "date_creation",
+
+    )
+
+
+    search_fields = (
+
+        "nom_exploitation",
+        "utilisateur__username",
+        "utilisateur__email",
+
     )
 
 
     readonly_fields = (
+
         "date_creation",
-        "est_certifie_bio",
+        "certification_bio",
+
     )
+
+
+
+    @admin.display(
+        description="BIO SPG"
+    )
+    def certification_bio(self, obj):
+
+        if obj.est_certifie_bio:
+
+            return format_html(
+                '<span style="color:green;">Validée</span>'
+            )
+
+        return format_html(
+            '<span style="color:red;">Non validée</span>'
+        )
 
 
 
@@ -177,29 +286,50 @@ class NotificationAdmin(admin.ModelAdmin):
 
 
     list_display = (
+
         "titre",
         "utilisateur",
-        "lu",
+        "statut",
         "date",
+
     )
 
 
     list_filter = (
+
         "lu",
         "date",
+
     )
 
 
     search_fields = (
+
         "titre",
         "message",
         "utilisateur__username",
+
     )
 
 
     readonly_fields = (
+
         "date",
+
     )
+
+
+
+    @admin.display(
+        description="État"
+    )
+    def statut(self, obj):
+
+        if obj.lu:
+
+            return "Lue"
+
+        return "Non lue"
 
 
 
@@ -212,33 +342,41 @@ class JournalActiviteAdmin(admin.ModelAdmin):
 
 
     list_display = (
+
         "utilisateur",
         "action",
         "objet",
         "adresse_ip",
         "date",
+
     )
 
 
     list_filter = (
+
         "action",
         "date",
+
     )
 
 
     search_fields = (
+
         "utilisateur__username",
         "action",
         "objet",
+
     )
 
 
     readonly_fields = (
+
         "utilisateur",
         "action",
         "objet",
         "adresse_ip",
         "date",
+
     )
 
 
@@ -252,25 +390,27 @@ class ParametreAdmin(admin.ModelAdmin):
 
 
     list_display = (
+
         "commission_plateforme",
         "commission_livreur",
         "devise",
         "maintenance",
+
     )
 
 
     readonly_fields = (
+
         "id",
+
     )
+
 
 
     def has_add_permission(self, request):
 
-        """
-        Un seul paramètre global existe.
-        """
-
         return not Parametre.objects.exists()
+
 
 
     def has_delete_permission(self, request, obj=None):

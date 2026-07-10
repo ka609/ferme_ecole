@@ -3,9 +3,7 @@ Django settings for ferme_ecole project.
 """
 
 from pathlib import Path
-
 from datetime import timedelta
-
 
 
 # =====================================================
@@ -13,7 +11,6 @@ from datetime import timedelta
 # =====================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 
 SECRET_KEY = (
@@ -34,6 +31,10 @@ ALLOWED_HOSTS = []
 # =====================================================
 
 INSTALLED_APPS = [
+
+    # Grappelli Admin
+    "grappelli",
+
 
     # Django
     "django.contrib.admin",
@@ -106,7 +107,7 @@ TEMPLATES = [
 
     {
         "BACKEND":
-        "django.template.backends.django.DjangoTemplates",
+            "django.template.backends.django.DjangoTemplates",
 
         "DIRS": [
             BASE_DIR / "templates"
@@ -139,22 +140,22 @@ DATABASES = {
     "default": {
 
         "ENGINE":
-        "django.db.backends.postgresql",
+            "django.db.backends.postgresql",
 
         "NAME":
-        "agro_db",
+            "agro_db",
 
         "USER":
-        "postgres",
+            "postgres",
 
         "PASSWORD":
-        "data2025",
+            "data2025",
 
         "HOST":
-        "localhost",
+            "localhost",
 
         "PORT":
-        "5432",
+            "5432",
     }
 }
 
@@ -176,22 +177,22 @@ AUTH_PASSWORD_VALIDATORS = [
 
     {
         "NAME":
-        "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+            "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
 
     {
         "NAME":
-        "django.contrib.auth.password_validation.MinimumLengthValidator",
+            "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
 
     {
         "NAME":
-        "django.contrib.auth.password_validation.CommonPasswordValidator",
+            "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
 
     {
         "NAME":
-        "django.contrib.auth.password_validation.NumericPasswordValidator",
+            "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -230,7 +231,6 @@ STATICFILES_DIRS = [
 ]
 
 
-
 MEDIA_URL = "/media/"
 
 
@@ -241,6 +241,24 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = (
     "django.db.models.BigAutoField"
 )
+
+
+
+# =====================================================
+# GRAPPELLI ADMIN
+# =====================================================
+
+GRAPPELLI_ADMIN_TITLE = (
+    "FERME-ÉCOLE Administration"
+)
+
+
+GRAPPELLI_INDEX_DASHBOARD = (
+    "grappelli.dashboard.dashboards.DefaultIndexDashboard"
+)
+
+
+GRAPPELLI_AUTOCOMPLETE_SEARCH = True
 
 
 

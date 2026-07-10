@@ -1,4 +1,4 @@
-#catalog/admin.py
+# catalog/admin.py
 
 from django.contrib import admin
 
@@ -56,7 +56,6 @@ class CertificationAdmin(admin.ModelAdmin):
 
     autocomplete_fields = (
         "producteur",
-        "valide_par",
     )
 
     readonly_fields = (

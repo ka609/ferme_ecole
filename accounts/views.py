@@ -28,6 +28,8 @@ from .models import (
     JournalActivite,
     Parametre,
 )
+from catalog.models import Produit
+from market.models import Commande
 
 from .serializers import (
     UtilisateurSerializer,
@@ -231,3 +233,65 @@ class ParametreViewSet(viewsets.ModelViewSet):
     queryset = Parametre.objects.all()
     serializer_class = ParametreSerializer
     permission_classes = [permissions.IsAdminUser]
+
+    # =====================================================
+    # STATISTIQUES PRODUCTEUR
+    # =====================================================
+
+class ProducteurStatistiqueViewSet(viewsets.ViewSet):
+
+    permission_classes = [
+        permissions.IsAuthenticated
+        ]
+
+    def list(self, request):
+
+            try:
+                producteur = Producteur.objects.get(
+                    utilisateur=request.user
+                )
+
+            except Producteur.DoesNotExist:
+
+                return Response(
+                    {
+                        "detail": "Profil producteur introuvable."
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            produits = Produit.objects.filter(
+                producteur=producteur
+            )
+
+            commandes = Commande.objects.filter(
+                lignes__produit__producteur=producteur
+            ).distinct()
+
+            data = {
+
+                "nombre_produits":
+                    produits.count(),
+
+                "produits_valides":
+                    produits.filter(
+                        valide=True
+                    ).count(),
+
+                "produits_disponibles":
+                    produits.filter(
+                        disponible=True
+                    ).count(),
+
+                "stock_total":
+                    sum(
+                        produit.stock
+                        for produit in produits
+                    ),
+
+                "nombre_commandes":
+                    commandes.count(),
+
+            }
+
+            return Response(data)
