@@ -54,6 +54,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 
 from .serializers import (
     PanierSerializer,
+    PanierArticleSerializer,
     AjouterPanierArticleSerializer,
     CommandeSerializer,
     CreationCommandeSerializer,
@@ -114,7 +115,6 @@ class IsAdmin(permissions.BasePermission):
         )
 
 
-
 # =====================================================
 # PANIER
 # =====================================================
@@ -123,7 +123,6 @@ class IsAdmin(permissions.BasePermission):
 class PanierViewSet(viewsets.ModelViewSet):
 
     serializer_class = PanierSerializer
-
 
     permission_classes = [
         IsClient
@@ -135,79 +134,44 @@ class PanierViewSet(viewsets.ModelViewSet):
         return Panier.objects.filter(
             client=self.request.user
         ).prefetch_related(
-            "articles"
+            "articles__produit"
         )
 
 
 
-    @action(
-        detail=False,
-        methods=["post"]
-    )
-    def ajouter(
-        self,
-        request
-    ):
+    # Voir un panier précis
+    def retrieve(self, request, *args, **kwargs):
 
-        serializer = AjouterPanierArticleSerializer(
-            data=request.data
+        panier = get_object_or_404(
+            self.get_queryset(),
+            id=kwargs["pk"]
         )
 
-        serializer.is_valid(
-            raise_exception=True
+        serializer = PanierSerializer(
+            panier
         )
-
-
-        produit = serializer.validated_data["produit"]
-
-
-        if not Produit.objects.visibles_publiquement().filter(
-            id=produit.id
-        ).exists():
-
-            return Response(
-                {
-                    "detail": "Produit non disponible."
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-        if hasattr(request.user, "producteur"):
-
-            if produit.producteur == request.user.producteur:
-
-                return Response(
-                    {
-                        "detail":
-                        "Un producteur ne peut pas acheter ses propres produits."
-                    },
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
-
-        panier, created = Panier.objects.get_or_create(
-            client=request.user,
-            producteur=produit.producteur
-        )
-
-
-        PanierArticle.objects.update_or_create(
-            panier=panier,
-            produit=produit,
-            defaults={
-                "quantite":
-                    serializer.validated_data["quantite"],
-                "prix":
-                    produit.prix,
-            }
-        )
-
 
         return Response(
-            PanierSerializer(panier).data,
-            status=status.HTTP_201_CREATED
+            serializer.data
         )
+
+
+
+    # Supprimer un panier complet
+    def destroy(self, request, *args, **kwargs):
+
+        panier = get_object_or_404(
+            self.get_queryset(),
+            id=kwargs["pk"]
+        )
+
+        panier.delete()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
 
 
 
@@ -218,8 +182,6 @@ class PanierViewSet(viewsets.ModelViewSet):
 
 class PanierArticleViewSet(viewsets.ModelViewSet):
 
-    serializer_class = AjouterPanierArticleSerializer
-
     permission_classes = [
         IsClient
     ]
@@ -229,8 +191,188 @@ class PanierArticleViewSet(viewsets.ModelViewSet):
 
         return PanierArticle.objects.filter(
             panier__client=self.request.user
+        ).select_related(
+            "produit",
+            "panier"
         )
 
+
+
+    def get_serializer_class(self):
+
+        if self.action == "create":
+
+            return AjouterPanierArticleSerializer
+
+        return PanierArticleSerializer
+
+
+
+
+    # Ajouter un produit au panier
+    def create(self, request, *args, **kwargs):
+
+
+        serializer = AjouterPanierArticleSerializer(
+            data=request.data,
+            context={
+                "request": request
+            }
+        )
+
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+
+
+        produit = serializer.validated_data["produit"]
+
+        quantite = serializer.validated_data["quantite"]
+
+
+
+        # Vérification produit public
+        if not Produit.objects.visibles_publiquement().filter(
+            id=produit.id
+        ).exists():
+
+            return Response(
+                {
+                    "detail":
+                    "Produit non disponible."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+
+        # Création ou récupération du panier du producteur
+        panier, created = Panier.objects.get_or_create(
+            client=request.user,
+            producteur=produit.producteur
+        )
+
+
+
+        # Vérifier que le panier ne contient pas
+        # un produit d'un autre producteur
+        if not panier.peut_ajouter(produit):
+
+            return Response(
+                {
+                    "detail":
+                    "Un panier ne peut contenir que les produits d'un seul producteur."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+
+
+        article, created = PanierArticle.objects.update_or_create(
+
+            panier=panier,
+
+            produit=produit,
+
+            defaults={
+
+                "quantite":
+                    quantite,
+
+                "prix":
+                    produit.prix,
+            }
+
+        )
+
+
+
+        return Response(
+
+            PanierArticleSerializer(
+                article
+            ).data,
+
+            status=status.HTTP_201_CREATED
+
+        )
+
+
+
+
+    # Modifier quantité
+    def update(self, request, *args, **kwargs):
+
+        article = get_object_or_404(
+
+            self.get_queryset(),
+
+            id=kwargs["pk"]
+
+        )
+
+
+        quantite = request.data.get(
+            "quantite"
+        )
+
+
+        if quantite is None:
+
+            return Response(
+
+                {
+                    "detail":
+                    "La quantité est obligatoire."
+                },
+
+                status=status.HTTP_400_BAD_REQUEST
+
+            )
+
+
+        article.quantite = quantite
+
+        article.save()
+
+
+
+        return Response(
+
+            PanierArticleSerializer(
+                article
+            ).data
+
+        )
+
+
+
+
+
+    # Supprimer un article
+    def destroy(self, request, *args, **kwargs):
+
+        article = get_object_or_404(
+
+            self.get_queryset(),
+
+            id=kwargs["pk"]
+
+        )
+
+
+        article.delete()
+
+
+
+        return Response(
+
+            status=status.HTTP_204_NO_CONTENT
+
+        )
 
 
 # =====================================================

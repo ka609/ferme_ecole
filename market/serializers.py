@@ -3,6 +3,7 @@
 from django.db import transaction
 from rest_framework import serializers
 from catalog.models import Produit
+from django.core.validators import MinValueValidator
 
 from .models import (
     Panier,
@@ -18,19 +19,20 @@ from .models import (
 
 
 class PanierArticleSerializer(serializers.ModelSerializer):
+
     produit_nom = serializers.CharField(
         source="produit.nom",
         read_only=True
     )
 
-    sous_total = serializers.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        read_only=True
-    )
+
+    sous_total = serializers.SerializerMethodField()
+
 
     class Meta:
+
         model = PanierArticle
+
         fields = [
             "id",
             "produit",
@@ -39,7 +41,21 @@ class PanierArticleSerializer(serializers.ModelSerializer):
             "prix",
             "sous_total",
         ]
-        read_only_fields = ["prix"]
+
+
+        read_only_fields = [
+            "id",
+            "prix",
+            "sous_total",
+        ]
+
+
+    def get_sous_total(
+        self,
+        obj
+    ):
+
+        return obj.prix * obj.quantite
 
 
 class PanierSerializer(serializers.ModelSerializer):
@@ -71,39 +87,73 @@ class PanierSerializer(serializers.ModelSerializer):
 
 
 class AjouterPanierArticleSerializer(serializers.ModelSerializer):
+
     class Meta:
+
         model = PanierArticle
+
+
         fields = [
             "produit",
             "quantite",
         ]
 
-    def validate(self, attrs):
-        panier = self.context.get("panier")
+
+
+    def validate(
+        self,
+        attrs
+    ):
+
+        panier = self.context.get(
+            "panier"
+        )
+
+
         produit = attrs["produit"]
 
+
+
         if panier and not panier.peut_ajouter(produit):
+
             raise serializers.ValidationError(
                 "Un panier ne peut contenir que les produits d'un seul producteur."
             )
 
+
         return attrs
 
-    def create(self, validated_data):
+
+
+    def create(
+        self,
+        validated_data
+    ):
+
         produit = validated_data["produit"]
+
+
         validated_data["prix"] = produit.prix
 
-        return super().create(validated_data)
 
-
+        return super().create(
+            validated_data
+        )
 class LigneCommandeSerializer(serializers.ModelSerializer):
+
     produit_nom = serializers.CharField(
         source="produit.nom",
         read_only=True
     )
 
+
+    sous_total = serializers.SerializerMethodField()
+
+
     class Meta:
+
         model = LigneCommande
+
         fields = [
             "id",
             "produit",
@@ -112,30 +162,48 @@ class LigneCommandeSerializer(serializers.ModelSerializer):
             "prix",
             "sous_total",
         ]
+
+
         read_only_fields = [
+            "id",
             "prix",
             "sous_total",
         ]
 
 
+    def get_sous_total(self, obj):
+
+        return obj.prix * obj.quantite
+
+
+
+
+
 class CommandeSerializer(serializers.ModelSerializer):
+
     lignes = LigneCommandeSerializer(
         many=True,
         read_only=True
     )
+
 
     client_nom = serializers.CharField(
         source="client.nom_complet",
         read_only=True
     )
 
+
     producteur_nom = serializers.CharField(
         source="producteur.nom_exploitation",
         read_only=True
     )
 
+
+
     class Meta:
+
         model = Commande
+
         fields = [
             "id",
             "numero",
@@ -151,7 +219,9 @@ class CommandeSerializer(serializers.ModelSerializer):
             "lignes",
         ]
 
+
         read_only_fields = [
+            "id",
             "numero",
             "client",
             "livreur",
@@ -160,72 +230,147 @@ class CommandeSerializer(serializers.ModelSerializer):
         ]
 
 
+
+
+
+
+
 class CreationLigneCommandeSerializer(serializers.Serializer):
+
     produit = serializers.PrimaryKeyRelatedField(
+
         queryset=Produit.objects.all()
+
     )
 
+
     quantite = serializers.IntegerField(
-        min_value=1
+
+        validators=[
+            MinValueValidator(1)
+        ]
+
     )
+
+
+
+
+
 
 
 class CreationCommandeSerializer(serializers.ModelSerializer):
+
     lignes = CreationLigneCommandeSerializer(
+
         many=True
+
     )
 
+
+
     class Meta:
+
         model = Commande
+
         fields = [
+
             "producteur",
+
             "adresse_livraison",
+
             "lignes",
+
         ]
 
+
+
     def validate(self, attrs):
+
         producteur = attrs["producteur"]
 
+
         for ligne in attrs["lignes"]:
-            if ligne["produit"].producteur != producteur:
+
+            produit = ligne["produit"]
+
+
+            if produit.producteur != producteur:
+
                 raise serializers.ValidationError(
+
                     "Tous les produits doivent appartenir au même producteur."
+
                 )
+
 
         return attrs
 
+
+
+
+
     @transaction.atomic
     def create(self, validated_data):
+
         user = self.context["request"].user
 
-        lignes_data = validated_data.pop("lignes")
+
+        lignes_data = validated_data.pop(
+            "lignes"
+        )
+
 
         commande = Commande.objects.create(
+
             client=user,
+
             **validated_data
+
         )
+
 
         montant_total = 0
 
+
+
         for ligne in lignes_data:
+
             produit = ligne["produit"]
+
             quantite = ligne["quantite"]
 
+
+
             LigneCommande.objects.create(
+
                 commande=commande,
+
                 produit=produit,
+
                 quantite=quantite,
+
                 prix=produit.prix,
+
             )
+
 
             montant_total += produit.prix * quantite
 
+
+
         commande.montant_total = montant_total
+
         commande.save()
 
+
+
         Livraison.objects.create(
+
             commande=commande
+
         )
+
+
 
         return commande
 
