@@ -29,7 +29,6 @@ class UtilisateurAdmin(UserAdmin):
     form = UtilisateurChangeForm
     add_form = UtilisateurCreationForm
 
-
     list_display = (
         "username",
         "nom_complet_admin",
@@ -40,42 +39,31 @@ class UtilisateurAdmin(UserAdmin):
         "is_staff",
     )
 
-
     list_filter = (
-
         "role",
         "actif",
         "is_staff",
         "is_superuser",
         "premiere_connexion",
-
     )
 
-
     search_fields = (
-
         "username",
         "email",
         "nom",
         "prenom",
         "telephone",
-
     )
-
 
     ordering = (
         "-date_creation",
     )
 
-
     readonly_fields = (
-
         "date_creation",
         "last_login",
         "date_joined",
-
     )
-
 
     fieldsets = (
 
@@ -88,7 +76,6 @@ class UtilisateurAdmin(UserAdmin):
                 )
             }
         ),
-
 
         (
             "Informations personnelles",
@@ -104,7 +91,6 @@ class UtilisateurAdmin(UserAdmin):
             }
         ),
 
-
         (
             "Profil plateforme",
             {
@@ -116,7 +102,6 @@ class UtilisateurAdmin(UserAdmin):
             }
         ),
 
-
         (
             "État du compte",
             {
@@ -126,7 +111,6 @@ class UtilisateurAdmin(UserAdmin):
                 )
             }
         ),
-
 
         (
             "Permissions",
@@ -141,7 +125,6 @@ class UtilisateurAdmin(UserAdmin):
             }
         ),
 
-
         (
             "Dates",
             {
@@ -152,44 +135,32 @@ class UtilisateurAdmin(UserAdmin):
                 )
             }
         ),
-
     )
-
 
     add_fieldsets = (
 
         (
             "Créer utilisateur",
             {
-
                 "classes": (
                     "wide",
                 ),
 
                 "fields": (
-
                     "username",
                     "password1",
                     "password2",
-
                     "nom",
                     "prenom",
-
                     "email",
                     "telephone",
-
                     "role",
-
                     "type_client",
                     "autre_precision",
-
                 ),
-
             },
         ),
-
     )
-
 
     @admin.display(
         description="Nom complet"
@@ -199,24 +170,21 @@ class UtilisateurAdmin(UserAdmin):
         return obj.nom_complet
 
 
-
     @admin.display(
         description="Statut"
     )
     def statut_compte(self, obj):
 
         if obj.actif:
-
             return format_html(
-                '<span style="color:green;">Actif</span>'
+                '<span style="color:green;">{}</span>',
+                "Actif"
             )
 
         return format_html(
-            '<span style="color:red;">Suspendu</span>'
+            '<span style="color:red;">{}</span>',
+            "Suspendu"
         )
-
-
-
 # =====================================================
 # PRODUCTEUR
 # =====================================================
@@ -224,41 +192,27 @@ class UtilisateurAdmin(UserAdmin):
 @admin.register(Producteur)
 class ProducteurAdmin(admin.ModelAdmin):
 
-
     list_display = (
-
         "nom_exploitation",
         "utilisateur",
         "certification_bio",
         "date_creation",
-
     )
-
 
     list_filter = (
-
         "date_creation",
-
     )
 
-
     search_fields = (
-
         "nom_exploitation",
         "utilisateur__username",
         "utilisateur__email",
-
     )
-
 
     readonly_fields = (
-
         "date_creation",
         "certification_bio",
-
     )
-
-
 
     @admin.display(
         description="BIO SPG"
@@ -266,17 +220,15 @@ class ProducteurAdmin(admin.ModelAdmin):
     def certification_bio(self, obj):
 
         if obj.est_certifie_bio:
-
             return format_html(
-                '<span style="color:green;">Validée</span>'
+                '<span style="color:green;">{}</span>',
+                "Validée"
             )
 
         return format_html(
-            '<span style="color:red;">Non validée</span>'
+            '<span style="color:red;">{}</span>',
+            "Non validée"
         )
-
-
-
 # =====================================================
 # NOTIFICATIONS
 # =====================================================
