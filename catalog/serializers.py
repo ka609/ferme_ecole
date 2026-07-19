@@ -312,7 +312,7 @@ class ProduitPublicSerializer(
 ):
 
 
-    producteur = serializers.CharField(
+    producteur_nom = serializers.CharField(
 
         source="producteur.nom_exploitation",
 
@@ -375,7 +375,7 @@ class ProduitPublicSerializer(
             "id",
 
 
-            "producteur",
+            "producteur_nom",
 
             "categorie",
 

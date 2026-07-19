@@ -2,6 +2,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from decimal import Decimal
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -38,7 +39,7 @@ class Panier(models.Model):
 class PanierArticle(models.Model):
     panier = models.ForeignKey(Panier, on_delete=models.CASCADE, related_name="articles")
     produit = models.ForeignKey("catalog.Produit", on_delete=models.CASCADE, related_name="+")
-    quantite = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(0.01)])
+    quantite = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal(0.01))])
     prix = models.DecimalField(
         max_digits=10, decimal_places=2,
         help_text="Prix unitaire au moment de l'ajout (peut différer du prix courant du produit)."
