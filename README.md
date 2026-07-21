@@ -123,6 +123,6 @@ L’objectif est de proposer une solution numérique permettant de valoriser les
 ## 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/votre-utilisateur/backend-ferme-ecole.git
+https://github.com/ka609/ferme_ecole.git
 
-cd backend-ferme-ecole
+cd ferme-ecole
