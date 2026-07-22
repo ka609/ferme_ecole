@@ -367,9 +367,16 @@ class Commission(models.Model):
     def save(self, *args, **kwargs):
         if not self.montant:
             from accounts.models import Parametre
-            self.montant = Parametre.charger().commission_livreur
-        super().save(*args, **kwargs)
 
+            parametre = Parametre.charger()
+
+            montant_commande = self.livraison.commande.montant_total
+
+            self.montant = (
+                                   montant_commande * parametre.commission_livreur
+                           ) / 100
+
+        super().save(*args, **kwargs)
     def valider(self):
         if self.statut == StatutCommission.EN_ATTENTE:
             self.statut = StatutCommission.VALIDEE

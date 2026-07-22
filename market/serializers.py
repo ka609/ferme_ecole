@@ -453,21 +453,46 @@ class SocieteLivraisonSerializer(serializers.ModelSerializer):
 class LivraisonSerializer(serializers.ModelSerializer):
     commande_numero = serializers.CharField(
         source="commande.numero",
-        read_only=True
+        read_only=True,
+    )
+
+    client_nom = serializers.CharField(
+        source="commande.client.nom_complet",
+        read_only=True,
+    )
+
+    client_telephone = serializers.CharField(
+        source="commande.client.telephone",
+        read_only=True,
+    )
+
+    adresse_livraison = serializers.CharField(
+        source="commande.adresse_livraison",
+        read_only=True,
+    )
+
+    montant_total = serializers.DecimalField(
+        source="commande.montant_total",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
     )
 
     livreur_nom = serializers.CharField(
         source="livreur.nom_complet",
-        read_only=True
+        read_only=True,
     )
 
     class Meta:
         model = Livraison
-
         fields = [
             "id",
             "commande",
             "commande_numero",
+            "client_nom",
+            "client_telephone",
+            "adresse_livraison",
+            "montant_total",
             "livreur",
             "livreur_nom",
             "societe",
@@ -477,16 +502,6 @@ class LivraisonSerializer(serializers.ModelSerializer):
             "confirmee_par",
             "date_confirmation",
         ]
-
-        read_only_fields = [
-            "livreur",
-            "statut",
-            "date_prise",
-            "date_livraison",
-            "confirmee_par",
-            "date_confirmation",
-        ]
-
 
 class CommissionSerializer(serializers.ModelSerializer):
     livreur_nom = serializers.CharField(

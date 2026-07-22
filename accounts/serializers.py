@@ -467,36 +467,34 @@ class JournalActiviteSerializer(serializers.ModelSerializer):
         )
 
 
-
 # =====================================================
 # PARAMETRES
 # =====================================================
 
 class ParametreSerializer(serializers.ModelSerializer):
 
-
     class Meta:
-
         model = Parametre
 
-
         fields = (
-
             "id",
-
             "commission_plateforme",
-
             "commission_livreur",
-
             "devise",
-
             "maintenance",
-
         )
-
 
         read_only_fields = (
-
             "id",
-
         )
+
+        extra_kwargs = {
+            "commission_plateforme": {
+                "min_value": 0,
+                "max_value": 100,
+            },
+            "commission_livreur": {
+                "min_value": 0,
+                "max_value": 100,
+            },
+        }

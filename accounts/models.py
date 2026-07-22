@@ -415,12 +415,11 @@ class Parametre(models.Model):
         ]
     )
 
-
     commission_livreur = models.DecimalField(
-        "Commission livreur",
-        max_digits=10,
+        "Commission livreur (%)",
+        max_digits=5,
         decimal_places=2,
-        default=0
+        default=10
     )
 
 

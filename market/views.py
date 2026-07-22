@@ -753,22 +753,26 @@ class CommissionViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = CommissionSerializer
 
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
 
         user = self.request.user
 
-
         if user.role == Role.LIVREUR:
-
             return Commission.objects.filter(
                 livreur=user
+            ).select_related(
+                "livreur",
+                "livraison__commande",
             )
 
-
         if user.role == Role.ADMIN:
-
-            return Commission.objects.all()
-
+            return Commission.objects.all().select_related(
+                "livreur",
+                "livraison__commande",
+            )
 
         return Commission.objects.none()
